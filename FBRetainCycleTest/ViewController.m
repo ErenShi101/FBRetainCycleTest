@@ -27,6 +27,7 @@
  
     
     [self.retainObject retainCycleBlock];
+   // [self.fbDetector addCandidate:self.retainObject.myBlock];
     self.testBtn = [[UIButton alloc] initWithFrame:CGRectMake(100, 100, 200, 200)];
     [self.testBtn setTitle:@"Test Leak" forState:UIControlStateNormal];
     [self.testBtn setTitleColor:[UIColor blueColor] forState:UIControlStateNormal];

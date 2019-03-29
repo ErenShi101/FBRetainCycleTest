@@ -122,15 +122,15 @@ static NSIndexSet *FBGetLayoutAsIndexesForDescription(NSUInteger minimumIndex, c
   NSMutableIndexSet *interestingIndexes = [NSMutableIndexSet new];
   NSUInteger currentIndex = minimumIndex;
 
-  while (*layoutDescription != '\x00') {
-    int upperNibble = (*layoutDescription & 0xf0) >> 4;
-    int lowerNibble = *layoutDescription & 0xf;
+  while (*layoutDescription != '\x00') { // \x00 表示结束符
+    int upperNibble = (*layoutDescription & 0xf0) >> 4;  // 取前4bit
+    int lowerNibble = *layoutDescription & 0xf;  // 取后4bit
 
     // Upper nimble is for skipping
-    currentIndex += upperNibble;
+    currentIndex += upperNibble;  // 越过不是stong的index
 
     // Lower nimble describes count
-    [interestingIndexes addIndexesInRange:NSMakeRange(currentIndex, lowerNibble)];
+    [interestingIndexes addIndexesInRange:NSMakeRange(currentIndex, lowerNibble)]; // 记录strong 属性的index
     currentIndex += lowerNibble;
 
     ++layoutDescription;
@@ -147,7 +147,7 @@ static NSUInteger FBGetMinimumIvarIndex(__unsafe_unretained Class aCls) {
   if (count > 0) {
     Ivar ivar = ivars[0];
     ptrdiff_t offset = ivar_getOffset(ivar);
-    minimumIndex = offset / (sizeof(void *));
+    minimumIndex = offset / (sizeof(void *));  // minimumIndex 以CUP对应的位 为单位
   }
 
   free(ivars);
@@ -156,6 +156,7 @@ static NSUInteger FBGetMinimumIvarIndex(__unsafe_unretained Class aCls) {
 }
 
 static NSArray<id<FBObjectReference>> *FBGetStrongReferencesForClass(Class aCls) {
+  // STEP 1. 获取class的ivar，并封装为 id<FBObjectReference>
   NSArray<id<FBObjectReference>> *ivars = [FBGetClassReferences(aCls) filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(id evaluatedObject, NSDictionary *bindings) {
     if ([evaluatedObject isKindOfClass:[FBIvarReference class]]) {
       FBIvarReference *wrapper = evaluatedObject;
@@ -164,15 +165,19 @@ static NSArray<id<FBObjectReference>> *FBGetStrongReferencesForClass(Class aCls)
     return YES;
   }]];
 
+  // STEP 2. 获取strong ivar的 index set
+  // 关于IvarLayout, 参见
+  // 《FBRetainCycleDetector解析——获取一般对象的Strong成员变量》 http://zhenby.com/blog/2016/04/29/FBRetainCycleDetector-Learning-1/
+  // 《Objective-C Class Ivar Layout 探索》 https://blog.sunnyxx.com/2015/09/13/class-ivar-layout/
   const uint8_t *fullLayout = class_getIvarLayout(aCls);
-
   if (!fullLayout) {
     return nil;
   }
 
-  NSUInteger minimumIndex = FBGetMinimumIvarIndex(aCls);
-  NSIndexSet *parsedLayout = FBGetLayoutAsIndexesForDescription(minimumIndex, fullLayout);
+  NSUInteger minimumIndex = FBGetMinimumIvarIndex(aCls); //  minimumIndex 是第一个ivar的index
+  NSIndexSet *parsedLayout = FBGetLayoutAsIndexesForDescription(minimumIndex, fullLayout);  // 获取strong ivar的 index set
 
+  // STEP 3. 根据 parsedLayout， 过滤出strong 引用的 id<FBObjectReference>
   NSArray<id<FBObjectReference>> *filteredIvars =
   [ivars filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(id<FBObjectReference> evaluatedObject,
                                                                            NSDictionary *bindings) {

@@ -25,15 +25,16 @@
     return nil;
   }
 
-  NSArray *strongIvars = FBGetObjectStrongReferences(self.object, self.configuration.layoutCache);
+  NSArray *strongIvars = FBGetObjectStrongReferences(self.object, self.configuration.layoutCache); // 获取当前对象对应类（及父类）中所有strong refer的ivar
 
-  NSMutableArray *retainedObjects = [[[super allRetainedObjects] allObjects] mutableCopy];
+  NSMutableArray *retainedObjects = [[[super allRetainedObjects] allObjects] mutableCopy];  // 获取 当前
 
   for (id<FBObjectReference> ref in strongIvars) {
-    id referencedObject = [ref objectReferenceFromObject:self.object];
+    id referencedObject = [ref objectReferenceFromObject:self.object]; // 传入self.object 看是否有对应的strong ivar实例
 
     if (referencedObject) {
       NSArray<NSString *> *namePath = [ref namePath];
+      // 将找到的strong ref ivar封装为引用图上的节点类型  FBObjectiveCGraphElement
       FBObjectiveCGraphElement *element = FBWrapObjectGraphElementWithContext(self,
                                                                               referencedObject,
                                                                               self.configuration,
@@ -44,7 +45,7 @@
     }
   }
 
-  if ([NSStringFromClass(aCls) hasPrefix:@"__NSCF"]) {
+  if ([NSStringFromClass(aCls) hasPrefix:@"__NSCF"]) {  // 对CF类的处理
     /**
      If we are dealing with toll-free bridged collections, we are not guaranteed that the collection
      will hold only Objective-C objects. We are not able to check in runtime what callbacks it uses to
@@ -53,7 +54,7 @@
     return [NSSet setWithArray:retainedObjects];
   }
 
-  if (class_isMetaClass(aCls)) {
+  if (class_isMetaClass(aCls)) { // 对meta class的处理
     // If it's a meta-class it can conform to following protocols,
     // but it would crash when trying enumerating
     return nil;

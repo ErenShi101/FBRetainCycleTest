@@ -40,17 +40,17 @@ FBObjectiveCGraphElement *FBWrapObjectGraphElementWithContext(FBObjectiveCGraphE
     return nil;
   }
   FBObjectiveCGraphElement *newElement;
-  if (FBObjectIsBlock((__bridge void *)object)) {
+  if (FBObjectIsBlock((__bridge void *)object)) { // block
     newElement = [[FBObjectiveCBlock alloc] initWithObject:object
                                              configuration:configuration
                                                   namePath:namePath];
   } else {
     if ([object_getClass(object) isSubclassOfClass:[NSTimer class]] &&
-        configuration.shouldInspectTimers) {
+        configuration.shouldInspectTimers) {  // Timer
       newElement = [[FBObjectiveCNSCFTimer alloc] initWithObject:object
                                                    configuration:configuration
                                                         namePath:namePath];
-    } else {
+    } else {  // ObjectiveC object
       newElement = [[FBObjectiveCObject alloc] initWithObject:object
                                                 configuration:configuration
                                                      namePath:namePath];

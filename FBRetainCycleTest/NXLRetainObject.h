@@ -11,8 +11,11 @@
 NS_ASSUME_NONNULL_BEGIN
 typedef void(^blockType)(void);
 @interface NXLRetainObject : NSObject
+
 @property(nonatomic, strong) UIViewController *vc;
 @property(nonatomic, strong) blockType myBlock;
+@property(nonatomic, weak) NSNumber *age;
+@property(nonatomic, strong) NSString *name;
 
 - (void)retainCycleBlock;
 @end
